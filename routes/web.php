@@ -3,6 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProductController;
 
+Route::get('/', function () {
+    return view('welcome');
+});
+
 Route::group(['prefix' => 'inventory', 'as' => 'products.'], function () {
 
     Route::get('/all', [ProductController::class, 'index'])->name('index');
