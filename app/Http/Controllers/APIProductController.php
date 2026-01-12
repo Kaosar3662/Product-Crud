@@ -27,6 +27,7 @@ class APIProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'thumbnail'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'status'      => 'nullable|boolean',
+            'price'       => 'required|numeric|min:0',
         ]);
 
         $data = [
@@ -34,6 +35,7 @@ class APIProductController extends Controller
             'slug'        => Str::slug($request->name),
             'category_id' => $request->category_id,
             'status'      => $request->boolean('status'),
+            'price'       => $request->price,
         ];
 
         if ($request->hasFile('thumbnail')) {
@@ -56,6 +58,7 @@ class APIProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'thumbnail'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'status'      => 'nullable|boolean',
+            'price'       => 'required|numeric|min:0',
         ]);
 
         $data = [
@@ -63,6 +66,7 @@ class APIProductController extends Controller
             'slug'        => Str::slug($request->name),
             'category_id' => $request->category_id,
             'status'      => $request->boolean('status'),
+            'price'       => $request->price,
         ];
 
         if ($request->hasFile('thumbnail')) {
@@ -95,4 +99,3 @@ class APIProductController extends Controller
         ]);
     }
 }
-
