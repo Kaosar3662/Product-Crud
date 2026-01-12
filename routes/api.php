@@ -1,8 +1,15 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\APIProductController;
+use App\Http\Controllers\APICategoryController;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+
+Route::prefix('inventory')->group(function () {
+    Route::get('/all', [APIProductController::class, 'index']);
+    Route::post('/store', [APIProductController::class, 'store']);
+    Route::put('/{product:slug}/update', [APIProductController::class, 'update']);
+    Route::delete('/{product:slug}/delete', [APIProductController::class, 'destroy']);
+});
+
+Route::get('/categories', [APICategoryController::class, 'show']);

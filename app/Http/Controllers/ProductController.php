@@ -16,13 +16,13 @@ class ProductController extends Controller
         $products = Product::with('category')->get();
         return view('products.index', compact('products'));
     }
-    
+
     public function create()
     {
         $categories = Category::where('status', 1)->get();
         return view('products.create', compact('categories'));
     }
-    
+
     // Add
     public function store(Request $request)
     {
@@ -50,14 +50,14 @@ class ProductController extends Controller
             return redirect()->back()->withInput()->with('error', 'Failed to create product: ' . $e->getMessage());
         }
     }
-    
+
     // Edit
     public function edit(Product $product)
     {
         $categories = Category::where('status', 1)->get();
         return view('products.edit', compact('product', 'categories'));
     }
-    
+
     public function update(Request $request, Product $product)
     {
         $request->validate([
@@ -88,7 +88,7 @@ class ProductController extends Controller
             return redirect()->back()->withInput()->with('error', 'Failed to update product: ' . $e->getMessage());
         }
     }
-    
+
     // Delete
     public function destroy(Product $product)
     {
@@ -100,3 +100,5 @@ class ProductController extends Controller
         return redirect()->route('products.index');
     }
 }
+
+
