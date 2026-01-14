@@ -28,6 +28,7 @@ class APIProductController extends Controller
             'thumbnail'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'status'      => 'nullable|boolean',
             'price'       => 'required|numeric|min:0',
+            'description' => 'nullable|string',
         ]);
 
         $data = [
@@ -36,6 +37,7 @@ class APIProductController extends Controller
             'category_id' => $request->category_id,
             'status'      => $request->boolean('status'),
             'price'       => $request->price,
+            'description' => $request->description,
         ];
 
         if ($request->hasFile('thumbnail')) {
@@ -56,9 +58,10 @@ class APIProductController extends Controller
         $request->validate([
             'name'        => 'required|string|max:255',
             'category_id' => 'required|exists:categories,id',
-            'thumbnail'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            ''   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'status'      => 'nullable|boolean',
             'price'       => 'required|numeric|min:0',
+            'description' => 'nullable|string',
         ]);
 
         $data = [
@@ -67,6 +70,7 @@ class APIProductController extends Controller
             'category_id' => $request->category_id,
             'status'      => $request->boolean('status'),
             'price'       => $request->price,
+            'description' => $request->description,
         ];
 
         if ($request->hasFile('thumbnail')) {
