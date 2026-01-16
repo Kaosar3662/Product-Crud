@@ -19,6 +19,12 @@ class APIProductController extends Controller
         );
     }
 
+    // Get single product by SLUG
+    public function show(Product $product)
+    {
+        return response()->json($product->load('category'));
+    }
+
     // Store new product
     public function store(Request $request)
     {

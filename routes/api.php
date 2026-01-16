@@ -10,6 +10,7 @@ Route::prefix('inventory')->group(function () {
     Route::post('/store', [APIProductController::class, 'store']);
     Route::put('/{product:slug}/update', [APIProductController::class, 'update']);
     Route::delete('/{product:slug}/delete', [APIProductController::class, 'destroy']);
+    Route::get('/{product:slug}', [APIProductController::class, 'show']);
 });
 
 Route::get('/categories', [APICategoryController::class, 'show']);
