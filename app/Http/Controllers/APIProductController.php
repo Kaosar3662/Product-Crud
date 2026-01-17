@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
+use App\Services\ProductService;
 
 class APIProductController extends Controller
 {
+    protected ProductService $productService;
 
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
 
     // Get all products
     public function index()
@@ -19,93 +24,93 @@ class APIProductController extends Controller
         );
     }
 
-    // Get single product by SLUG
+    /*  
+    
+    public function index(Request $request) 
+    {
+        // Get query params
+        $search = $request->query('search'); // ?search=shirt
+        $limit  = (int) $request->query('limit', 10); // ?limit=10
+        $offset = (int) $request->query('offset', 0); // ?offset=0
+
+        // Start query
+        $query = Product::with('category')->latest();
+
+        // Apply search
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                ->orWhere('description', 'like', "%{$search}%");
+        }
+
+        // Get total count for pagination info
+        $total = $query->count();
+
+        // Apply limit + offset
+        $products = $query->skip($offset)->take($limit)->get();
+
+        // Return JSON
+        return response()->json([
+            'total' => $total,
+            'count' => $products->count(),
+            'products' => $products,
+        ]);
+    }
+*/
+
+
+
+
+    // Get single product
     public function show(Product $product)
     {
-        return response()->json($product->load('category'));
+        $product->load('category');
+
+        return response()->json(
+            $this->productService->apiData($product)
+        );
     }
 
     // Store new product
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
-        $request->validate([
-            'name'        => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            'thumbnail'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'status'      => 'nullable|boolean',
-            'price'       => 'required|numeric|min:0',
-            'description' => 'nullable|string',
+        $validated = $request->validated();
+        $validated['status'] = $request->boolean('status');
+
+        $product = $this->productService->create([
+            ...$validated,
+            'thumbnail' => $request->file('thumbnail'),
         ]);
-
-        $data = [
-            'name'        => $request->name,
-            'slug'        => Str::slug($request->name),
-            'category_id' => $request->category_id,
-            'status'      => $request->boolean('status'),
-            'price'       => $request->price,
-            'description' => $request->description,
-        ];
-
-        if ($request->hasFile('thumbnail')) {
-            $data['thumbnail'] = $request->file('thumbnail')->store('products', 'public');
-        }
-
-        $product = Product::create($data);
 
         return response()->json([
             'message' => 'Product created successfully',
-            'product' => $product
+            'product' => $this->productService->apiData($product),
         ], 201);
     }
 
-    // Update product using SLUG
-    public function update(Request $request, Product $product)
+    // Update product
+    public function update(UpdateProductRequest $request, Product $product)
     {
-        $request->validate([
-            'name'        => 'required|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-            ''   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-            'status'      => 'nullable|boolean',
-            'price'       => 'required|numeric|min:0',
-            'description' => 'nullable|string',
+        $validated = $request->validated();
+        $validated['status'] = $request->boolean('status');
+
+        $product = $this->productService->update($product, [
+            ...$validated,
+            'thumbnail' => $request->file('thumbnail'),
         ]);
-
-        $data = [
-            'name'        => $request->name,
-            'slug'        => Str::slug($request->name),
-            'category_id' => $request->category_id,
-            'status'      => $request->boolean('status'),
-            'price'       => $request->price,
-            'description' => $request->description,
-        ];
-
-        if ($request->hasFile('thumbnail')) {
-            if ($product->thumbnail) {
-                Storage::disk('public')->delete($product->thumbnail);
-            }
-
-            $data['thumbnail'] = $request->file('thumbnail')->store('products', 'public');
-        }
-
-        $product->update($data);
 
         return response()->json([
             'message' => 'Product updated successfully',
-            'product' => $product
+            'product' => $this->productService->apiData($product),
         ]);
     }
 
     // Delete product
     public function destroy(Product $product)
     {
-        if ($product->thumbnail) {
-            Storage::disk('public')->delete($product->thumbnail);
-        }
-
-        $product->delete();
+        $this->productService->delete($product);
 
         return response()->json([
-            'message' => 'Product deleted successfully'
+            'message' => 'Product deleted successfully',
         ]);
     }
 }

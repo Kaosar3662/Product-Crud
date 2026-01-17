@@ -5,11 +5,18 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
+use App\Services\ProductService;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 
 class ProductController extends Controller
 {
+    protected ProductService $productService;
+
+    public function __construct(ProductService $productService)
+    {
+        $this->productService = $productService;
+    }
     // Show
     public function index()
     {
@@ -24,26 +31,13 @@ class ProductController extends Controller
     }
 
     // Add
-    public function store(Request $request)
+    public function store(StoreProductRequest $request)
     {
-        $request->validate([
-            'name'        => 'required',
-            'category_id' => 'required',
-            'thumbnail'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
         try {
-            $data = [
-                'name'        => $request->name,
-                'slug'        => Str::slug($request->name),
-                'category_id' => $request->category_id,
-                'status'      => $request->has('status') ? 1 : 0,
-            ];
+            $data = $request->validated();
+            $data['status'] = $request->has('status');
 
-            if ($request->hasFile('thumbnail')) {
-                $data['thumbnail'] = $request->file('thumbnail')->store('products', 'public');
-            }
-
-            Product::create($data);
+            $this->productService->create($data);
 
             return redirect()->route('products.index')->with('success', 'Product created successfully.');
         } catch (\Exception $e) {
@@ -58,30 +52,13 @@ class ProductController extends Controller
         return view('products.edit', compact('product', 'categories'));
     }
 
-    public function update(Request $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product)
     {
-        $request->validate([
-            'name'        => 'required',
-            'category_id' => 'required',
-            'thumbnail'   => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
-        ]);
         try {
-            $data = [
-                'name'        => $request->name,
-                'slug'        => Str::slug($request->name),
-                'category_id' => $request->category_id,
-                'status'      => $request->has('status') ? 1 : 0,
-            ];
+            $data = $request->validated();
+            $data['status'] = $request->has('status');
 
-            if ($request->hasFile('thumbnail')) {
-                if ($product->thumbnail) {
-                    Storage::disk('public')->delete($product->thumbnail);
-                }
-
-                $data['thumbnail'] = $request->file('thumbnail')->store('products', 'public');
-            }
-
-            $product->update($data);
+            $this->productService->update($product, $data);
 
             return redirect()->route('products.index')->with('success', 'Product updated successfully.');
         } catch (\Exception $e) {
@@ -92,11 +69,7 @@ class ProductController extends Controller
     // Delete
     public function destroy(Product $product)
     {
-        if ($product->thumbnail) {
-            Storage::disk('public')->delete($product->thumbnail);
-        }
-
-        $product->delete();
+        $this->productService->delete($product);
         return redirect()->route('products.index');
     }
 }
