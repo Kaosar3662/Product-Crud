@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
+use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Services\ProductService;
 
@@ -16,17 +17,9 @@ class APIProductController extends Controller
         $this->productService = $productService;
     }
 
-    // Get all products
-    public function index()
-    {
-        return response()->json(
-            Product::latest()->get()
-        );
-    }
 
-    /*  
-    
-    public function index(Request $request) 
+
+   public function index(Request $request) 
     {
         // Get query params
         $search = $request->query('search'); // ?search=shirt
@@ -34,7 +27,8 @@ class APIProductController extends Controller
         $offset = (int) $request->query('offset', 0); // ?offset=0
 
         // Start query
-        $query = Product::with('category')->latest();
+        $query = Product::with('category:id,name')->latest();
+        /* select("name", "slug", "category_id")-> */
 
         // Apply search
         if ($search) {
@@ -54,8 +48,8 @@ class APIProductController extends Controller
             'count' => $products->count(),
             'products' => $products,
         ]);
-    }
-*/
+    } 
+
 
 
 
@@ -63,7 +57,7 @@ class APIProductController extends Controller
     // Get single product
     public function show(Product $product)
     {
-        $product->load('category');
+        $product->load('category:id,name');
 
         return response()->json(
             $this->productService->apiData($product)
