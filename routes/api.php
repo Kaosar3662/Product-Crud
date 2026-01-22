@@ -3,7 +3,17 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\APIProductController;
 use App\Http\Controllers\APICategoryController;
+use Illuminate\Http\Request;
+use App\Http\Controllers\RegisterController;
 
+Route::get('/user', function (Request $request) {
+    return $request->user();
+})->middleware('auth:sanctum');
+
+Route::controller(RegisterController::class)->group(function () {
+    Route::post('register', 'register');
+    Route::post('login', 'login');
+});
 
 Route::prefix('inventory')->group(function () {
     Route::get('/all', [APIProductController::class, 'index']);
