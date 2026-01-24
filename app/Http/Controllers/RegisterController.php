@@ -20,7 +20,7 @@ class RegisterController extends BaseController
             'c_password' => 'required|same:password',
         ]);
         if ($validator->fails()) {
-            return $this->sendError('Validtion error.', $validator->errors());
+            return $this->sendError('Validtion error.', $validator->errors(), 422);
         };
         $input = $request->all();
         $input['password'] = bcrypt($input['password']);

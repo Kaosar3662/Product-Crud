@@ -18,7 +18,7 @@ Route::controller(RegisterController::class)->group(function () {
 Route::prefix('inventory')->group(function () {
     Route::get('/all', [APIProductController::class, 'index']);
     Route::post('/store', [APIProductController::class, 'store']);
-    Route::put('/{product:slug}/update', [APIProductController::class, 'update']);
+    Route::post('/{product:slug}/update', [APIProductController::class, 'update']);
     Route::delete('/{product:slug}/delete', [APIProductController::class, 'destroy']);
     Route::get('/{product:slug}', [APIProductController::class, 'show']);
 });
