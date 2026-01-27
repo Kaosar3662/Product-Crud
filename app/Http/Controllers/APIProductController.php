@@ -28,7 +28,6 @@ class APIProductController extends Controller
 
         // Start query
         $query = Product::with('category:id,name')->latest();
-        /* select("name", "slug", "category_id")-> */
 
         // Apply search
         if ($search) {
@@ -36,7 +35,6 @@ class APIProductController extends Controller
                 ->orWhere('description', 'like', "%{$search}%");
         }
 
-        // Get total count for pagination info
         $total = $query->count();
 
         // Apply limit + offset
@@ -77,7 +75,6 @@ class APIProductController extends Controller
 
         return response()->json([
             'message' => 'Product created successfully',
-            'product' => $this->productService->apiData($product),
         ], 201);
     }
 
@@ -94,7 +91,6 @@ class APIProductController extends Controller
 
         return response()->json([
             'message' => 'Product updated successfully',
-            'product' => $this->productService->apiData($product),
         ]);
     }
 

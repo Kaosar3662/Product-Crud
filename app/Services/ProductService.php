@@ -22,6 +22,7 @@ class ProductService
             'status' => $data['status'],
             'description' => $data['description'] ?? null,
             'thumbnail' => $thumbnail,
+            'price' => $data['price'],
         ]);
     }
 
@@ -41,6 +42,7 @@ class ProductService
             'category_id' => $data['category_id'],
             'status' => $data['status'],
             'description' => $data['description'] ?? $product->description,
+            'price' => $data['price'],
         ]);
 
         return $product;

@@ -17,7 +17,7 @@ class RegisterController extends BaseController
             'name' => 'required',
             'email' => 'required|email|unique:users,email',
             'password' => 'required',
-            'c_password' => 'required|same:password',
+            'cpassword' => 'required|same:password',    
         ]);
         if ($validator->fails()) {
             return $this->sendError('Validtion error.', $validator->errors(), 422);
@@ -26,7 +26,6 @@ class RegisterController extends BaseController
         $input['password'] = bcrypt($input['password']);
         $user = User::create($input);
 
-        $success['token'] = $user->createToken('Myapp')->plainTextToken;
         $success['name'] = $user->name;
 
         return $this->sendResponse($success, 'You are added Successfully.');

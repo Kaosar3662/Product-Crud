@@ -15,8 +15,8 @@ Route::controller(RegisterController::class)->group(function () {
     Route::post('login', 'login');
 });
 
-Route::prefix('inventory')->group(function () {
-    Route::get('/all', [APIProductController::class, 'index']);
+Route::prefix('products')->middleware('auth:sanctum')->group(function () {
+    Route::get('/all', [APIProductController::class, 'index'])->middleware('throttle:60,1');
     Route::post('/store', [APIProductController::class, 'store']);
     Route::post('/{product:slug}/update', [APIProductController::class, 'update']);
     Route::delete('/{product:slug}/delete', [APIProductController::class, 'destroy']);
