@@ -13,6 +13,7 @@ Route::get('/user', function (Request $request) {
 Route::controller(RegisterController::class)->group(function () {
     Route::post('register', 'register');
     Route::post('login', 'login');
+    Route::get('/verify-email/{token}', 'verifyEmail');
 });
 
 Route::prefix('products')->middleware('auth:sanctum')->group(function () {
