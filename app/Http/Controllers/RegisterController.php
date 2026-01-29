@@ -9,7 +9,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Notifications\ConfirmMail;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Support\Facades\Notification;
+
 class RegisterController extends BaseController
 {
     public function register(Request $request): JsonResponse
@@ -52,11 +54,13 @@ class RegisterController extends BaseController
             return $this->sendResponse('Unauthorized', ['error' => 'Unauthorized']);
         }
     }
-    public function verifyEmail($token): JsonResponse
-    {
+    public function verifyEmail($token)
+        
+        {
+        $frontendUrl = 'http://localhost:5173/email-confirmed';
         $user = User::where('mail_token', $token)->first();
 
-        if (!$user) {   
+        if (!$user) {
             return $this->sendError('Invalid token', [], 404);
         }
 
@@ -64,6 +68,84 @@ class RegisterController extends BaseController
         $user->mail_token = null;
         $user->save();
 
-        return $this->sendResponse(['name' => $user->name], 'Email verified successfully.');
+        return redirect($frontendUrl);
+    }
+
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email'
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        // Generate token
+        $token = Str::random(60);
+
+        $user->password_reset_token = $token;
+        $user->password_reset_sent_at = now();
+        $user->save();
+
+        // Send the reset email
+        $resetLink = "http://localhost:5173/reset-password?token={$token}&email={$user->email}";
+        $user->notify(new ResetPasswordNotification($user, $resetLink));
+
+        return response()->json([
+            'message' => 'Password reset link sent to your email.'
+        ]);
+    }
+
+    public function validateResetToken(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'token' => 'required|string',
+        ]);
+
+        $user = User::where('email', $request->email)
+                    ->where('password_reset_token', $request->token)
+                    ->first();
+
+        if (!$user) {
+            return response()->json(['valid' => false, 'message' => 'Invalid token'], 400);
+        }
+
+        // Check if token expired (60 minutes)
+        if (!$user->password_reset_sent_at || now()->greaterThan(\Carbon\Carbon::parse($user->password_reset_sent_at)->addMinutes(60))) {
+            return response()->json(['valid' => false, 'message' => 'Token expired'], 400);
+        }
+
+        return response()->json(['valid' => true]);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'token' => 'required|string',
+            'new_password' => 'required|string|min:6',
+            'confirm_password' => 'required|string|same:new_password',
+        ]);
+
+        $user = User::where('email', $request->email)
+                    ->where('password_reset_token', $request->token)
+                    ->first();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Invalid token'], 400);
+        }
+
+        // Check if token expired (60 minutes)
+        if (!$user->password_reset_sent_at || now()->greaterThan(\Carbon\Carbon::parse($user->password_reset_sent_at)->addMinutes(60))) {
+            return response()->json(['success' => false, 'message' => 'Token expired'], 400);
+        }
+
+        $user->password = bcrypt($request->new_password);
+        $user->password_reset_token = null;
+        $user->password_reset_sent_at = null;
+        $user->save();
+
+        return response()->json(['success' => true, 'message' => 'Password reset successfully']);
     }
 }
