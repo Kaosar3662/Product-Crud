@@ -33,7 +33,7 @@ class RegisterController extends BaseController
         $user = User::create($input);
         $user->notify(new ConfirmMail($user));
 
-        return $this->sendResponse('Success', 'You are added Successfully.');
+        return $this->sendResponse(null, 'You are added successfully.', 201);
     }
     public function login(Request $request): JsonResponse
     {
@@ -42,7 +42,9 @@ class RegisterController extends BaseController
 
             $user = Auth::user();
             if (!$user->email_verified_at) {
-                return $this->sendResponse('Email not verified', ['error' => 'Please verify your email first'], 403);
+                return $this->sendError('Email not verified', [
+                    'email' => ['Please verify your email first']
+                ], 403);
             }
             $success['token'] = $user->createToken('Myapp')->plainTextToken;
             $success['name'] = $user->name;
@@ -51,7 +53,9 @@ class RegisterController extends BaseController
             return $this->sendResponse($success, 'You are logged in Successfully.');
         } else {
 
-            return $this->sendResponse('Unauthorized', ['error' => 'Unauthorized']);
+            return $this->sendError('Unauthorized', [
+                'auth' => ['Invalid credentials']
+            ], 401);
         }
     }
     public function verifyEmail($token)
@@ -91,9 +95,7 @@ class RegisterController extends BaseController
         $resetLink = "http://localhost:5173/reset-password?token={$token}&email={$user->email}";
         $user->notify(new ResetPasswordNotification($user, $resetLink));
 
-        return response()->json([
-            'message' => 'Password reset link sent to your email.'
-        ]);
+        return $this->sendResponse(null, 'Password reset link sent to your email.');
     }
 
     public function validateResetToken(Request $request)
@@ -108,15 +110,15 @@ class RegisterController extends BaseController
                     ->first();
 
         if (!$user) {
-            return response()->json(['valid' => false, 'message' => 'Invalid token'], 400);
+            return $this->sendError('Invalid token', null, 400);
         }
 
         // Check if token expired (60 minutes)
         if (!$user->password_reset_sent_at || now()->greaterThan(\Carbon\Carbon::parse($user->password_reset_sent_at)->addMinutes(60))) {
-            return response()->json(['valid' => false, 'message' => 'Token expired'], 400);
+            return $this->sendError('Token expired', null, 400);
         }
 
-        return response()->json(['valid' => true]);
+        return $this->sendResponse(['valid' => true], 'Token is valid');
     }
 
     public function resetPassword(Request $request)
@@ -133,12 +135,12 @@ class RegisterController extends BaseController
                     ->first();
 
         if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Invalid token'], 400);
+            return $this->sendError('Invalid token', null, 400);
         }
 
         // Check if token expired (60 minutes)
         if (!$user->password_reset_sent_at || now()->greaterThan(\Carbon\Carbon::parse($user->password_reset_sent_at)->addMinutes(60))) {
-            return response()->json(['success' => false, 'message' => 'Token expired'], 400);
+            return $this->sendError('Token expired', null, 400);
         }
 
         $user->password = bcrypt($request->new_password);
@@ -146,6 +148,6 @@ class RegisterController extends BaseController
         $user->password_reset_sent_at = null;
         $user->save();
 
-        return response()->json(['success' => true, 'message' => 'Password reset successfully']);
+        return $this->sendResponse(null, 'Password reset successfully');
     }
 }

@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Services\ProductService;
 
-class APIProductController extends Controller
+class APIProductController extends BaseController
 {
     protected ProductService $productService;
 
@@ -41,7 +41,7 @@ class APIProductController extends Controller
         $products = $query->skip($offset)->take($limit)->get();
 
         // Return JSON
-        return response()->json([
+        return $this->sendResponse([
             'total' => $total,
             'count' => $products->count(),
             'products' => $products,
@@ -57,7 +57,7 @@ class APIProductController extends Controller
     {
         $product->load('category:id,name');
 
-        return response()->json(
+        return $this->sendResponse(
             $this->productService->apiData($product)
         );
     }
@@ -73,9 +73,7 @@ class APIProductController extends Controller
             'thumbnail' => $request->file('thumbnail'),
         ]);
 
-        return response()->json([
-            'message' => 'Product created successfully',
-        ], 201);
+        return $this->sendResponse(null, 'Product created successfully', 201);
     }
 
     // Update product
@@ -89,9 +87,7 @@ class APIProductController extends Controller
             'thumbnail' => $request->file('thumbnail'),
         ]);
 
-        return response()->json([
-            'message' => 'Product updated successfully',
-        ]);
+        return $this->sendResponse(null, 'Product updated successfully');
     }
 
     // Delete product
@@ -99,8 +95,6 @@ class APIProductController extends Controller
     {
         $this->productService->delete($product);
 
-        return response()->json([
-            'message' => 'Product deleted successfully',
-        ]);
+        return $this->sendResponse(null, 'Product deleted successfully');
     }
 }

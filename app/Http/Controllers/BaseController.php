@@ -3,31 +3,25 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class BaseController extends Controller
 {
-    public function sendResponse($result, $message)
+    public function sendResponse($data = null, string $message = 'Success', int $code = 200)
     {
-        $response = [
+        return response()->json([
             'success' => true,
-            'data' => $result,
             'message' => $message,
-        ];
-
-        return response()->json($response, 200);
+            'data' => $data,
+        ], $code);
     }
 
-    public function sendError($error, $errorMessage = [], $code = 500)
+    public function sendError(string $message = 'Error', $errors = null, int $code = 400)
     {
-        $response = [
+        return response()->json([
             'success' => false,
-            'message' => $error,
-        ];
-
-        if (!empty($errorMessage)) {
-            $response['data'] = $errorMessage;
-        }
-
-        return response()->json($response, $code);
+            'message' => $message,
+            'errors' => $errors,
+        ], $code);
     }
 }
