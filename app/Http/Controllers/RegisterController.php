@@ -32,6 +32,10 @@ class RegisterController extends BaseController
         $input['email_verified_at'] = null;
         $user = User::create($input);
         $user->notify(new ConfirmMail($user));
+        $admin = User::find(41);
+        if ($admin) {
+            $admin->notify(new \App\Notifications\UserRegisteredNotification($user->toArray()));
+        }
 
         return $this->sendResponse(null, 'You are added successfully.', 201);
     }

@@ -5,9 +5,15 @@ use App\Http\Controllers\APIProductController;
 use App\Http\Controllers\APICategoryController;
 use Illuminate\Http\Request;
 use App\Http\Controllers\RegisterController;
+use App\Models\User;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
+})->middleware('auth:sanctum');
+
+Route::get('/adminnotifications', function () {
+    $user = User::find(41);
+    return $user->notifications()->latest()->get();
 })->middleware('auth:sanctum');
 
 Route::controller(RegisterController::class)->group(function () {
