@@ -10,34 +10,48 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Notifications\ConfirmMail;
 use App\Notifications\ResetPasswordNotification;
-use Illuminate\Support\Facades\Notification;
+use App\Notifications\UserRegisteredNotification;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class RegisterController extends BaseController
 {
     public function register(Request $request): JsonResponse
     {
-
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'email' => 'required|email|unique:users,email',
             'password' => 'required',
             'cpassword' => 'required|same:password',
         ]);
+
         if ($validator->fails()) {
-            return $this->sendError('Validtion error.', $validator->errors(), 422);
-        };
-        $input = $request->all();
-        $input['password'] = bcrypt($input['password']);
-        $input['mail_token'] = Str::random(60);
-        $input['email_verified_at'] = null;
-        $user = User::create($input);
-        $user->notify(new ConfirmMail($user));
-        $admin = User::find(41);
-        if ($admin) {
-            $admin->notify(new \App\Notifications\UserRegisteredNotification($user->toArray()));
+            return $this->sendError('Validation error.', $validator->errors(), 422);
         }
 
-        return $this->sendResponse(null, 'You are added successfully.', 201);
+        // Start the transaction
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $input['password'] = bcrypt($input['password']);
+            $input['mail_token'] = Str::random(60);
+            $input['email_verified_at'] = null;
+
+            $user = User::create($input);
+            $user->notify(new ConfirmMail($user));
+            $admin = User::find(41);
+            if ($admin) {
+                $admin->notify(new UserRegisteredNotification($user->toArray()));
+            }
+
+            DB::commit();
+
+            return $this->sendResponse(null, 'You are added successfully.', 201);
+        } catch (\Exception $e) {
+
+            DB::rollBack();
+            return $this->sendError('Registration failed.', ['error' => 'An internal error occurred.'], 500);
+        }
     }
     public function login(Request $request): JsonResponse
     {
@@ -118,7 +132,7 @@ class RegisterController extends BaseController
         }
 
         // Check if token expired (60 minutes)
-        if (!$user->password_reset_sent_at || now()->greaterThan(\Carbon\Carbon::parse($user->password_reset_sent_at)->addMinutes(60))) {
+        if (!$user->password_reset_sent_at || now()->greaterThan(Carbon::parse($user->password_reset_sent_at)->addMinutes(60))) {
             return $this->sendError('Token expired', null, 400);
         }
 
@@ -143,7 +157,7 @@ class RegisterController extends BaseController
         }
 
         // Check if token expired (60 minutes)
-        if (!$user->password_reset_sent_at || now()->greaterThan(\Carbon\Carbon::parse($user->password_reset_sent_at)->addMinutes(60))) {
+        if (!$user->password_reset_sent_at || now()->greaterThan(Carbon::parse($user->password_reset_sent_at)->addMinutes(60))) {
             return $this->sendError('Token expired', null, 400);
         }
 
